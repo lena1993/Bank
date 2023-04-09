@@ -1,6 +1,5 @@
 package com.bank.simulator.controller;
 
-import com.bank.simulator.domain.KeepValidatedCard;
 import com.bank.simulator.service.BankService;
 
 import io.swagger.annotations.Api;
@@ -24,7 +23,7 @@ public class BankController {
 
 
     @PostMapping("/checkCard")
-    public ResponseEntity checkCardExistenceInDb(@RequestBody Card card){
+    public ResponseEntity checkCardExistenceInDb(@RequestBody Card card) {
 
         ResponseEntity response = bankService.checkCardExistence(card);
         if(response.getStatusCode() == HttpStatus.OK){
@@ -32,47 +31,51 @@ public class BankController {
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "message5");
-        //return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @PostMapping("/checkPin")
-    public ResponseEntity checkPin(@RequestBody Card card){
-        ResponseEntity response = bankService.checkPinCode(card);
+    public ResponseEntity checkPin(@RequestBody Card card) {
+        ResponseEntity response = bankService.getTokenByPin(card);
 
-        if(response.getStatusCode() == HttpStatus.OK){
+        if(response.getStatusCode() == HttpStatus.OK) {
             return new ResponseEntity(response.getBody(), HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "message5");
-        //return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /*@PostMapping("/checkFingerprint")
+    public ResponseEntity checkFingerprint(@RequestBody Card card) {
+        ResponseEntity response = bankService.fingerprintChecking(card);
 
+        if(response.getStatusCode() == HttpStatus.OK) {
+            return new ResponseEntity(response.getBody(), HttpStatus.OK);
+        }
+
+        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "message5");
+    }
+*/
     @PostMapping("/checkBalance")
-
-    public ResponseEntity checkBalance(@RequestBody Map<String, String> param){
+    public ResponseEntity checkBalance(@RequestBody Map<String, String> param) {
 
         ResponseEntity response = bankService.getBalance(param.get("token"));
 
-        if(response.getStatusCode() == HttpStatus.OK){
+        if(response.getStatusCode() == HttpStatus.OK) {
             return new ResponseEntity(response.getBody(), response.getHeaders(), HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "message5");
-        //return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @PostMapping("/cashOut")
-
-    public ResponseEntity cashOut(@RequestBody Map<String, String> params){
+    public ResponseEntity cashOut(@RequestBody Map<String, String> params) {
 
         ResponseEntity response = bankService.withdrawMoney(params.get("token"), Integer.parseInt(params.get("amount")));
 
-        if(response.getStatusCode() == HttpStatus.OK){
+        if(response.getStatusCode() == HttpStatus.OK) {
             return new ResponseEntity(response.getBody(), HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "message5");
-        //return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

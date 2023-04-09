@@ -13,6 +13,9 @@ public class Cards implements Serializable {
     @Column(name = "pin")
     private String pin;
 
+    @Column(name = "fingerprint")
+    private String fingerprint;
+
     @Column(name = "pan")
     private String pan;
 
@@ -33,14 +36,23 @@ public class Cards implements Serializable {
 
     public Cards(){}
 
-    public Cards(String pin, String pan, String expiryDate, String cardHolder, String cardType, String issuer, Integer balance) {
+    public Cards(String pin, String fingerprint, String pan, String expiryDate, String cardHolder, String cardType, String issuer, Integer balance) {
         this.pin = pin;
+        this.fingerprint = fingerprint;
         this.pan = pan;
         this.expiryDate = expiryDate;
         this.cardHolder = cardHolder;
         this.cardType = cardType;
         this.issuer = issuer;
         this.balance = balance;
+    }
+
+    public String getFingerprint() {
+        return fingerprint;
+    }
+
+    public void setFingerprint(String fingerprint) {
+        this.fingerprint = fingerprint;
     }
 
     public Integer getBalance() {
