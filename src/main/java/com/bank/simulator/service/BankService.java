@@ -27,9 +27,6 @@ public class BankService {
     @Autowired
     private CardRepo cardRepo;
 
-   /* @Autowired
-    MessageSource messageSource;*/
-
     @Autowired
     ApplicationProperties applicationProperties;
 
@@ -51,43 +48,34 @@ public class BankService {
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.NOT_VALID_CARD);
     }
 
-    public ResponseEntity getTokenByPin(Card insertedCard) throws HttpServerErrorException {
-        Iterable<Cards> cards = cardRepo.findAll();
+    //public ResponseEntity getTokenByPin(Card insertedCard) throws HttpServerErrorException {
+    public ResponseEntity getTokenByPin(String authenticationType, String pan, String pinOrFingerprint) throws HttpServerErrorException {
 
-        for (Cards card:cards) {
-            if(card.getPan().equals(insertedCard.getPan()) && card.getPin().equals(insertedCard.getPin())) {
+        Cards card = cardRepo.findByPan(pan);
 
-                String generatedToken = generateToken(card.getPin(), card.getPan());
-                validatedCardStorage.putCard(generatedToken, card);
+        if(authenticationType.equals("PIN") && card.getPin().equals(pinOrFingerprint)) {
+            String generatedToken = generateToken(card.getPin(), card.getPan());
+            validatedCardStorage.putCard(generatedToken, card);
 
-                Map<String, String> param = new HashMap<>();
-                param.put("cardToken", generatedToken);
+            Map<String, String> param = new HashMap<>();
+            param.put("cardToken", generatedToken);
 
-                return new ResponseEntity(param, HttpStatus.OK);
-            }
+            return new ResponseEntity(param, HttpStatus.OK);
+
+        }else if(authenticationType.equals("FINGERPRINT") && card.getFingerprint().equals(pinOrFingerprint)) {
+            String generatedToken = generateToken(card.getFingerprint(), card.getPan());
+            validatedCardStorage.putCard(generatedToken, card);
+
+            Map<String, String> param = new HashMap<>();
+            param.put("cardToken", generatedToken);
+
+            return new ResponseEntity(param, HttpStatus.OK);
+
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.WRONG_PIN);
     }
 
-   /* public ResponseEntity fingerprintChecking(Card insertedCard) throws HttpServerErrorException {
-        Iterable<Cards> cards = cardRepo.findAll();
-
-        for (Cards card:cards) {
-            if(card.getPan().equals(insertedCard.getPan()) && card.getFingerprint().equals(insertedCard.get)){
-
-                String generatedToken = generateToken(card.getPin(), card.getPan());
-                validatedCardStorage.putCard(generatedToken, card);
-
-                Map<String, String> param = new HashMap<>();
-                param.put("cardToken", generatedToken);
-
-                return new ResponseEntity(param, HttpStatus.OK);
-            }
-        }
-
-        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.WRONG_FINGERPRINT);
-    }*/
 
 
     public String generateToken(String pin, String pan) {
