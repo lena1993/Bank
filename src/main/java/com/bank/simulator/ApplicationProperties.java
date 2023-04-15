@@ -1,18 +1,39 @@
 package com.bank.simulator;
 
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
-@Component
+
+@Configuration
+@PropertySource("classpath:messages.properties")
 public class ApplicationProperties {
 
-    public static final String ISSUER_NAME = "issuerName";
-    public static final String PAN = "pan";
-    public static final String NOT_VALID_CARD = "The card is invalid";
-    public static final String WRONG_PIN = "The Pin is wrong";
-    public static final String WRONG_FINGERPRINT = "The FingerPrint is wrong";
-    public static final String FAIL_GET_BALANCE = "Fail to show balance";
-    public static final String CARD_TOKEN = "cardToken";
-    public static final String BALANCE = "balance";
-    public static final String FAIL_GET_MONEY = "Fail to get money";
+    @Value("${ISSUER_NAME}")
+    public String ISSUER_NAME;
+
+    @Value("${PAN}")
+    public String PAN;
+
+    @Value("${NOT_VALID_CARD}")
+    public String NOT_VALID_CARD;
+
+    @Value("${WRONG_PIN}")
+    public String WRONG_PIN;
+
+    @Value("${WRONG_FINGERPRINT}")
+    public String WRONG_FINGERPRINT;
+
+    @Value("${FAIL_GET_BALANCE}")
+    public String FAIL_GET_BALANCE;
+
+    @Value("${CARD_TOKEN}")
+    public String CARD_TOKEN;
+
+    @Value("${BALANCE}")
+    public String BALANCE;
+
+    @Value("${FAIL_GET_MONEY}")
+    public String FAIL_GET_MONEY;
 
 }
