@@ -34,8 +34,9 @@ public class BankController {
     }
 
     @PostMapping("/checkPin")
-    public ResponseEntity checkPin(@RequestBody Card card) {
-        ResponseEntity response = bankService.getTokenByPin(card);
+    public ResponseEntity checkPin(@RequestBody Map<String, String> param) {
+        ResponseEntity response = bankService.getTokenByPin(param.get("authenticationType"),
+                param.get("pan"), param.get("pinOrFingerprint"));
 
         if(response.getStatusCode() == HttpStatus.OK) {
             return new ResponseEntity(response.getBody(), HttpStatus.OK);
