@@ -1,5 +1,10 @@
 package com.bank.simulator.service;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.bank.simulator.ApplicationProperties;
 import com.bank.simulator.domain.ValidatedCardStorage;
 import com.bank.simulator.CardAuthentication;
@@ -12,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpServerErrorException;
 
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -77,9 +83,22 @@ public class BankService {
     }
 
 
-
     public String generateToken(String pin, String pan) {
-        int random_int = (int)Math.floor(Math.random() * (15 - 10 + 1) + 10);
+
+        Algorithm algorithm = Algorithm.HMAC256("card");
+
+        Instant now = Instant.now();
+        String jwtToken = JWT.create()
+                .withIssuer("Card")
+                .withSubject("Card Details")
+                .withClaim("pan", pan)
+                .withIssuedAt(now)
+                .withExpiresAt(now.plusSeconds(120))
+                .sign(algorithm);
+
+        return jwtToken;
+
+        /*int random_int = (int)Math.floor(Math.random() * (15 - 10 + 1) + 10);
 
         int pinHashCode = pin.hashCode() * random_int;
         int panHashCode = pan.hashCode() * random_int;
@@ -90,11 +109,28 @@ public class BankService {
             token = token * (-1);
         }
 
-        return token.toString();
+        return token.toString();*/
     }
 
     public ResponseEntity getBalance(String token) throws HttpServerErrorException {
-       Integer balance = Integer.valueOf(validatedCardStorage.getValidatedCard().get(token).getBalance());
+        /*Algorithm algorithm = Algorithm.HMAC256("card");
+
+        JWTVerifier verifier = JWT.require(algorithm)
+                .withIssuer("Card")
+                .build();
+        DecodedJWT decodedJWT = verifier.verify(token);
+
+        String pan = ((Claim) decodedJWT.getClaim("pan")).asString();
+
+        //String pan = decodedJWT.getClaim("pan").toString().toString();
+
+        Cards card = cardRepo.findByPan(pan);*/
+
+        Cards card = getCardByToken(token);
+
+        Integer balance =  card.getBalance();
+
+       //Integer balance = Integer.valueOf(validatedCardStorage.getValidatedCard().get(token).getBalance());
 
         if(balance == 0) {
            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
@@ -104,11 +140,40 @@ public class BankService {
         param.put(applicationProperties.CARD_TOKEN, token);
         param.put(applicationProperties.BALANCE, balance.toString());
 
-        return new ResponseEntity( param, HttpStatus.OK);
+        return new ResponseEntity(param, HttpStatus.OK);
+    }
+
+    private Cards getCardByToken(String token){
+        Algorithm algorithm = Algorithm.HMAC256("card");
+
+        JWTVerifier verifier = JWT.require(algorithm)
+                .withIssuer("Card")
+                .build();
+        DecodedJWT decodedJWT = verifier.verify(token);
+
+        String pan = ((Claim) decodedJWT.getClaim("pan")).asString();
+
+        Cards card = cardRepo.findByPan(pan);
+
+        return card;
     }
 
     public ResponseEntity withdrawMoney(String token, Integer amount) {
-        Integer cardBalance = validatedCardStorage.getValidatedCard().get(token).getBalance();
+
+        Cards card = getCardByToken(token);
+        Integer cardBalance =  card.getBalance();
+
+        Integer balance = cardBalance - amount;
+        card.setBalance(balance);
+        cardRepo.save(card);
+
+        Map<String, String> param = new HashMap<>();
+        param.put(applicationProperties.PAN, card.getPan());
+        param.put(applicationProperties.BALANCE, balance.toString());
+
+        return new ResponseEntity(param, HttpStatus.OK);
+
+       /* Integer cardBalance = validatedCardStorage.getValidatedCard().get(token).getBalance();
 
         if(cardBalance < amount) {
             validatedCardStorage.removeCard(token);
@@ -128,6 +193,6 @@ public class BankService {
         param.put(applicationProperties.PAN, validatedCardStorage.getValidatedCard().get(token).getPan());
         param.put(applicationProperties.BALANCE, balance.toString());
 
-        return new ResponseEntity(param, HttpStatus.OK);
+        return new ResponseEntity(param, HttpStatus.OK);*/
     }
 }
