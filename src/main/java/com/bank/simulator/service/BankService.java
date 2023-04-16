@@ -59,7 +59,7 @@ public class BankService {
 
         if(authenticationType.equals("PIN") && card.getPin().equals(pinOrFingerprint)) {
             String generatedToken = generateToken(card.getPin(), card.getPan());
-            validatedCardStorage.putCard(generatedToken, card);
+            validatedCardStorage.putCard(card.getPan(), generatedToken);
 
             Map<String, String> param = new HashMap<>();
             param.put("cardToken", generatedToken);
@@ -68,7 +68,7 @@ public class BankService {
 
         }else if(authenticationType.equals("FINGERPRINT") && card.getFingerprint().equals(pinOrFingerprint)) {
             String generatedToken = generateToken(card.getFingerprint(), card.getPan());
-            validatedCardStorage.putCard(generatedToken, card);
+            validatedCardStorage.putCard(card.getPan(), generatedToken);
 
             Map<String, String> param = new HashMap<>();
             param.put("cardToken", generatedToken);
@@ -85,6 +85,11 @@ public class BankService {
 
         Integer balance =  card.getBalance();
 
+//        if(!(validatedCardStorage.getValidatedCard().get("pan").equals(card.getPan()))){
+        if(validatedCardStorage.getValidatedCard().get(card.getPan())==null){
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
+        }
+
         if(balance == 0) {
            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
         }
@@ -100,6 +105,10 @@ public class BankService {
         Cards card = getCardByToken(token);
         Integer cardBalance =  card.getBalance();
 
+        if(validatedCardStorage.getValidatedCard().get(card.getPan())==null){
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
+        }
+
         if(card.getBalance()<amount){
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_MONEY);
         }
@@ -107,6 +116,8 @@ public class BankService {
         Integer balance = cardBalance - amount;
         card.setBalance(balance);
         cardRepo.save(card);
+
+        validatedCardStorage.removeCard(card.getPan());
 
         Map<String, String> param = new HashMap<>();
         param.put(applicationProperties.PAN, card.getPan());
@@ -130,7 +141,7 @@ public class BankService {
         return card;
     }
 
-    public String generateToken(String pin, String pan) {
+    private String generateToken(String pin, String pan) {
         Algorithm algorithm = Algorithm.HMAC256("card");
 
         Instant now = Instant.now();

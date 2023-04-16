@@ -9,22 +9,22 @@ import java.util.Map;
 @Component
 public class ValidatedCardStorage {
 
-    private Map<String, Cards> validatedCard;
+    private Map<String, String> panOfTheCard;
 
     public ValidatedCardStorage() {
-        validatedCard = Collections.synchronizedMap(new HashMap<>());
+        panOfTheCard = Collections.synchronizedMap(new HashMap<>());
     }
 
-    public synchronized void putCard(String token, Cards card) {
-        validatedCard.put(token, card);
+    public synchronized void putCard(String pan, String token) {
+        panOfTheCard.put(pan, token);
     }
 
-    public Map<String, Cards> getValidatedCard() {
-        return validatedCard;
+    public Map<String, String> getValidatedCard() {
+        return panOfTheCard;
     }
 
-    public void removeCard(String token) {
-        validatedCard.remove(token);
+    public void removeCard(String pan) {
+        panOfTheCard.remove(pan);
     }
 
 }
