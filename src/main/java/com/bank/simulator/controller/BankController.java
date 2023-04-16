@@ -69,7 +69,7 @@ public class BankController {
     }
 
     @PostMapping("/cashOut")
-    public ResponseEntity cashOut(@RequestBody Map<String, String> params) {
+    public ResponseEntity<Object> cashOut(@RequestBody Map<String, String> params) {
 
         ResponseEntity response = bankService.withdrawMoney(params.get("token"), Integer.parseInt(params.get("amount")));
 

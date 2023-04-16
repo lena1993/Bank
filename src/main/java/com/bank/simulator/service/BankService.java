@@ -85,7 +85,6 @@ public class BankService {
 
         Integer balance =  card.getBalance();
 
-//        if(!(validatedCardStorage.getValidatedCard().get("pan").equals(card.getPan()))){
         if(validatedCardStorage.getValidatedCard().get(card.getPan())==null){
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
         }
@@ -101,7 +100,7 @@ public class BankService {
         return new ResponseEntity(param, HttpStatus.OK);
     }
 
-    public ResponseEntity withdrawMoney(String token, Integer amount) {
+    public ResponseEntity<Object> withdrawMoney(String token, Integer amount) {
         Cards card = getCardByToken(token);
         Integer cardBalance =  card.getBalance();
 
