@@ -36,4 +36,7 @@ public class ApplicationProperties {
     @Value("${FAIL_GET_MONEY}")
     public String FAIL_GET_MONEY;
 
+    @Value("${WRONG_AUTHENTICATION}")
+    public String WRONG_AUTHENTICATION;
+
 }

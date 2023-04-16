@@ -37,25 +37,23 @@ public class BankService {
     ApplicationProperties applicationProperties;
 
     public ResponseEntity checkCardExistence(Card insertedCard) {
-        Iterable<Cards> cards = cardRepo.findAll();
 
-        for (Cards card:cards) {
-            if(card.getPan().equals(insertedCard.getPan()) && card.getCardHolder().equals(insertedCard.getCardHolder()) &&
-                    card.getExpiryDate().equals(insertedCard.getExpiryDate()) && card.getIssuer().equals(insertedCard.getIssuer())) {
+        Cards card = cardRepo.findByPan(insertedCard.getPan());
 
-                Map<String, String> param = new HashMap<>();
-                param.put(applicationProperties.ISSUER_NAME, card.getIssuer());
-                param.put(applicationProperties.PAN, card.getPan());
+        if(card.getCardHolder().equals(insertedCard.getCardHolder()) && card.getExpiryDate().equals(insertedCard.getExpiryDate())
+                && card.getIssuer().equals(insertedCard.getIssuer())){
 
-                return new ResponseEntity(param, HttpStatus.OK);
-            }
+            Map<String, String> param = new HashMap<>();
+            param.put(applicationProperties.ISSUER_NAME, card.getIssuer());
+            param.put(applicationProperties.PAN, card.getPan());
+
+            return new ResponseEntity(param, HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.NOT_VALID_CARD);
     }
 
-    //public ResponseEntity getTokenByPin(Card insertedCard) throws HttpServerErrorException {
-    public ResponseEntity getTokenByPin(String authenticationType, String pan, String pinOrFingerprint) throws HttpServerErrorException {
+    public ResponseEntity getTokenByPinOrFingerprint(String authenticationType, String pan, String pinOrFingerprint) throws HttpServerErrorException {
 
         Cards card = cardRepo.findByPan(pan);
 
@@ -79,58 +77,13 @@ public class BankService {
 
         }
 
-        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.WRONG_PIN);
-    }
-
-
-    public String generateToken(String pin, String pan) {
-
-        Algorithm algorithm = Algorithm.HMAC256("card");
-
-        Instant now = Instant.now();
-        String jwtToken = JWT.create()
-                .withIssuer("Card")
-                .withSubject("Card Details")
-                .withClaim("pan", pan)
-                .withIssuedAt(now)
-                .withExpiresAt(now.plusSeconds(120))
-                .sign(algorithm);
-
-        return jwtToken;
-
-        /*int random_int = (int)Math.floor(Math.random() * (15 - 10 + 1) + 10);
-
-        int pinHashCode = pin.hashCode() * random_int;
-        int panHashCode = pan.hashCode() * random_int;
-
-        Integer token =  pinHashCode + panHashCode;
-
-        if(token<0) {
-            token = token * (-1);
-        }
-
-        return token.toString();*/
+        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.WRONG_AUTHENTICATION);
     }
 
     public ResponseEntity getBalance(String token) throws HttpServerErrorException {
-        /*Algorithm algorithm = Algorithm.HMAC256("card");
-
-        JWTVerifier verifier = JWT.require(algorithm)
-                .withIssuer("Card")
-                .build();
-        DecodedJWT decodedJWT = verifier.verify(token);
-
-        String pan = ((Claim) decodedJWT.getClaim("pan")).asString();
-
-        //String pan = decodedJWT.getClaim("pan").toString().toString();
-
-        Cards card = cardRepo.findByPan(pan);*/
-
         Cards card = getCardByToken(token);
 
         Integer balance =  card.getBalance();
-
-       //Integer balance = Integer.valueOf(validatedCardStorage.getValidatedCard().get(token).getBalance());
 
         if(balance == 0) {
            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
@@ -138,6 +91,25 @@ public class BankService {
 
         Map<String, String> param = new HashMap<>();
         param.put(applicationProperties.CARD_TOKEN, token);
+        param.put(applicationProperties.BALANCE, balance.toString());
+
+        return new ResponseEntity(param, HttpStatus.OK);
+    }
+
+    public ResponseEntity withdrawMoney(String token, Integer amount) {
+        Cards card = getCardByToken(token);
+        Integer cardBalance =  card.getBalance();
+
+        if(card.getBalance()<amount){
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_MONEY);
+        }
+
+        Integer balance = cardBalance - amount;
+        card.setBalance(balance);
+        cardRepo.save(card);
+
+        Map<String, String> param = new HashMap<>();
+        param.put(applicationProperties.PAN, card.getPan());
         param.put(applicationProperties.BALANCE, balance.toString());
 
         return new ResponseEntity(param, HttpStatus.OK);
@@ -158,41 +130,19 @@ public class BankService {
         return card;
     }
 
-    public ResponseEntity withdrawMoney(String token, Integer amount) {
+    public String generateToken(String pin, String pan) {
+        Algorithm algorithm = Algorithm.HMAC256("card");
 
-        Cards card = getCardByToken(token);
-        Integer cardBalance =  card.getBalance();
+        Instant now = Instant.now();
+        String jwtToken = JWT.create()
+                .withIssuer("Card")
+                .withSubject("Card Details")
+                .withClaim("pan", pan)
+                .withIssuedAt(now)
+                .withExpiresAt(now.plusSeconds(120))
+                .sign(algorithm);
 
-        Integer balance = cardBalance - amount;
-        card.setBalance(balance);
-        cardRepo.save(card);
+        return jwtToken;
 
-        Map<String, String> param = new HashMap<>();
-        param.put(applicationProperties.PAN, card.getPan());
-        param.put(applicationProperties.BALANCE, balance.toString());
-
-        return new ResponseEntity(param, HttpStatus.OK);
-
-       /* Integer cardBalance = validatedCardStorage.getValidatedCard().get(token).getBalance();
-
-        if(cardBalance < amount) {
-            validatedCardStorage.removeCard(token);
-
-            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_MONEY);
-        }
-
-        Integer balance = cardBalance - amount;
-
-        validatedCardStorage.getValidatedCard().get(token).setBalance(balance);
-
-        Optional<Cards> cards = cardRepo.findById(validatedCardStorage.getValidatedCard().get(token).getId());
-        cards.get().setBalance(balance);
-        Cards ret = cardRepo.save(cards.get());
-
-        Map<String, String> param = new HashMap<>();
-        param.put(applicationProperties.PAN, validatedCardStorage.getValidatedCard().get(token).getPan());
-        param.put(applicationProperties.BALANCE, balance.toString());
-
-        return new ResponseEntity(param, HttpStatus.OK);*/
     }
 }
