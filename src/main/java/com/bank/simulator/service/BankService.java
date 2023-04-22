@@ -8,6 +8,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.bank.simulator.ApplicationProperties;
 import com.bank.simulator.domain.ValidatedCardStorage;
 import com.bank.simulator.domain.Cards;
+import com.bank.simulator.dto.CardData;
 import com.bank.simulator.model.AuthType;
 import com.bank.simulator.repos.CardRepo;
 import com.bank.simulator.model.Card;
@@ -128,11 +129,18 @@ public class BankService {
 
         validatedCardStorage.removeCard(card.getPan());
 
-        Map<String, String> param = new HashMap<>();
+        /*Map<String, String> param = new HashMap<>();
         param.put(applicationProperties.PAN, card.getPan());
-        param.put(applicationProperties.BALANCE, balance.toString());
+        param.put(applicationProperties.BALANCE, balance.toString());*/
 
-        return new ResponseEntity(param, HttpStatus.OK);
+        CardData cardData = new CardData();
+        cardData.setCardPan(card.getPan());
+        cardData.setCardBalance(card.getBalance());
+
+//        JsonObject j=  new JsonObject();
+//        j.add("cardData", cardData.);
+
+        return new ResponseEntity(cardData, HttpStatus.OK);
     }
 
     private Cards getCardByToken(String token){
