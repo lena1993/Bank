@@ -7,7 +7,8 @@ import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @PropertySource("classpath:messages.properties")
-public class ApplicationProperties {
+public class MessagesProperties {
+
 
     @Value("${ISSUER_NAME}")
     public String ISSUER_NAME;
@@ -38,5 +39,8 @@ public class ApplicationProperties {
 
     @Value("${WRONG_AUTHENTICATION}")
     public String WRONG_AUTHENTICATION;
+
+    @Value("${CARD_NOT_FOUND}")
+    public String CARD_NOT_FOUND;
 
 }

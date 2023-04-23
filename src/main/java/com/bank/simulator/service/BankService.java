@@ -5,7 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.bank.simulator.ApplicationProperties;
+import com.bank.simulator.MessagesProperties;
 import com.bank.simulator.domain.ValidatedCardStorage;
 import com.bank.simulator.domain.Cards;
 import com.bank.simulator.dto.CardData;
@@ -39,7 +39,7 @@ public class BankService {
     private CardRepo cardRepo;
 
     @Autowired
-    ApplicationProperties applicationProperties;
+    MessagesProperties messagesProperties;
 
     public ResponseEntity checkCardExistence(Card insertedCard) {
         Cards card = cardRepo.findByPan(insertedCard.getPan());
@@ -48,13 +48,13 @@ public class BankService {
                 && card.getIssuer().equals(insertedCard.getIssuer())){
 
             Map<String, String> param = new HashMap<>();
-            param.put(applicationProperties.ISSUER_NAME, card.getIssuer());
-            param.put(applicationProperties.PAN, card.getPan());
+            param.put(messagesProperties.ISSUER_NAME, card.getIssuer());
+            param.put(messagesProperties.PAN, card.getPan());
 
             return new ResponseEntity(param, HttpStatus.OK);
         }
 
-        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.NOT_VALID_CARD);
+        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.NOT_VALID_CARD);
     }
 
     public ResponseEntity getTokenByPinOrFingerprint(String authenticationType, String pan, String pinOrFingerprint) throws HttpServerErrorException {
@@ -68,7 +68,7 @@ public class BankService {
                 result = checkPinOrFingerprint(pan, pinOrFingerprint);
                 break;
             default:
-                throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.WRONG_AUTHENTICATION);
+                throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.WRONG_AUTHENTICATION);
         }
 
         return result;
@@ -87,7 +87,7 @@ public class BankService {
             return new ResponseEntity(param, HttpStatus.OK);
         }
 
-        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.WRONG_AUTHENTICATION);
+        throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.WRONG_AUTHENTICATION);
     }
 
 
@@ -97,16 +97,16 @@ public class BankService {
         Integer balance =  card.getBalance();
 
         if(validatedCardStorage.getValidatedCard().get(card.getPan())== null){
-            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
         }
 
         if(balance == 0) {
-           throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
+           throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
         }
 
         Map<String, String> param = new HashMap<>();
-        param.put(applicationProperties.CARD_TOKEN, token);
-        param.put(applicationProperties.BALANCE, balance.toString());
+        param.put(messagesProperties.CARD_TOKEN, token);
+        param.put(messagesProperties.BALANCE, balance.toString());
 
         return new ResponseEntity(param, HttpStatus.OK);
     }
@@ -116,11 +116,11 @@ public class BankService {
         Integer cardBalance =  card.getBalance();
 
         if(validatedCardStorage.getValidatedCard().get(card.getPan())==null){
-            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_BALANCE);
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
         }
 
         if(card.getBalance()<amount){
-            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, applicationProperties.FAIL_GET_MONEY);
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_MONEY);
         }
 
         Integer balance = cardBalance - amount;
@@ -130,8 +130,8 @@ public class BankService {
         validatedCardStorage.removeCard(card.getPan());
 
         /*Map<String, String> param = new HashMap<>();
-        param.put(applicationProperties.PAN, card.getPan());
-        param.put(applicationProperties.BALANCE, balance.toString());*/
+        param.put(messagesProperties.PAN, card.getPan());
+        param.put(messagesProperties.BALANCE, balance.toString());*/
 
         CardData cardData = new CardData();
         cardData.setCardPan(card.getPan());
