@@ -1,7 +1,7 @@
 package com.bank.simulator.dto;
 
-public class CardData {
-
+public class Token {
+    private String token;
     private String pan;
 
     public String getPan() {
@@ -10,5 +10,13 @@ public class CardData {
 
     public void setPan(String pan) {
         this.pan = pan;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

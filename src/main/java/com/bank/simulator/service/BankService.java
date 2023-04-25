@@ -8,7 +8,9 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.bank.simulator.MessagesProperties;
 import com.bank.simulator.domain.ValidatedCardStorage;
 import com.bank.simulator.domain.Cards;
+import com.bank.simulator.dto.CardBalance;
 import com.bank.simulator.dto.CardData;
+import com.bank.simulator.dto.Token;
 import com.bank.simulator.model.AuthType;
 import com.bank.simulator.repos.CardRepo;
 import com.bank.simulator.model.Card;
@@ -47,11 +49,16 @@ public class BankService {
         if(card.getCardHolder().equals(insertedCard.getCardHolder()) && card.getExpiryDate().equals(insertedCard.getExpiryDate())
                 && card.getIssuer().equals(insertedCard.getIssuer())){
 
-            Map<String, String> param = new HashMap<>();
-            param.put(messagesProperties.ISSUER_NAME, card.getIssuer());
-            param.put(messagesProperties.PAN, card.getPan());
+//            Map<String, String> param = new HashMap<>();
+//            param.put(messagesProperties.ISSUER_NAME, card.getIssuer());
+//            param.put(messagesProperties.PAN, card.getPan());
 
-            return new ResponseEntity(param, HttpStatus.OK);
+            CardData cardData = new CardData();
+            cardData.setPan(card.getPan());
+
+            return new ResponseEntity(cardData, HttpStatus.OK);
+
+           // return new ResponseEntity(param, HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.NOT_VALID_CARD);
@@ -81,10 +88,13 @@ public class BankService {
             String generatedToken = generateToken(card.getPan());
             validatedCardStorage.putCard(card.getPan(), generatedToken);
 
-            Map<String, String> param = new HashMap<>();
-            param.put(CARD_TOKEN, generatedToken);
+//            Map<String, String> param = new HashMap<>();
+//            param.put(CARD_TOKEN, generatedToken);
+            Token token = new Token();
+            token.setPan(card.getPan());
+            token.setToken(generatedToken);
 
-            return new ResponseEntity(param, HttpStatus.OK);
+            return new ResponseEntity(token, HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.WRONG_AUTHENTICATION);
@@ -104,11 +114,15 @@ public class BankService {
            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
         }
 
-        Map<String, String> param = new HashMap<>();
+       /* Map<String, String> param = new HashMap<>();
         param.put(messagesProperties.CARD_TOKEN, token);
-        param.put(messagesProperties.BALANCE, balance.toString());
+        param.put(messagesProperties.BALANCE, balance.toString());*/
 
-        return new ResponseEntity(param, HttpStatus.OK);
+        CardBalance sendCardData = new CardBalance();
+        sendCardData.setCardPan(card.getPan());
+        sendCardData.setCardBalance(card.getBalance());
+
+        return new ResponseEntity(sendCardData, HttpStatus.OK);
     }
 
     public ResponseEntity<Object> withdrawMoney(String token, Integer amount) {
@@ -133,14 +147,14 @@ public class BankService {
         param.put(messagesProperties.PAN, card.getPan());
         param.put(messagesProperties.BALANCE, balance.toString());*/
 
-        CardData cardData = new CardData();
-        cardData.setCardPan(card.getPan());
-        cardData.setCardBalance(card.getBalance());
+        CardBalance sendCardData = new CardBalance();
+        sendCardData.setCardPan(card.getPan());
+        sendCardData.setCardBalance(card.getBalance());
 
 //        JsonObject j=  new JsonObject();
 //        j.add("cardData", cardData.);
 
-        return new ResponseEntity(cardData, HttpStatus.OK);
+        return new ResponseEntity(sendCardData, HttpStatus.OK);
     }
 
     private Cards getCardByToken(String token){

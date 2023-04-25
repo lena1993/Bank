@@ -8,6 +8,15 @@ public class Card {
     private String cardType;
     private String issuer;
 
+    public Card(String pin, String pan, String expiryDate, String cardHolder, String cardType, String issuer) {
+        this.pin = pin;
+        this.pan = pan;
+        this.expiryDate = expiryDate;
+        this.cardHolder = cardHolder;
+        this.cardType = cardType;
+        this.issuer = issuer;
+    }
+
     public String getPin() {
         return pin;
     }
