@@ -43,10 +43,14 @@ public class BankService {
     @Autowired
     MessagesProperties messagesProperties;
 
-    public ResponseEntity checkCardExistence(Card insertedCard) {
+    public CardData checkCardExistence(Card insertedCard) {
         Cards card = cardRepo.findByPan(insertedCard.getPan());
 
-        if(card.getCardHolder().equals(insertedCard.getCardHolder()) && card.getExpiryDate().equals(insertedCard.getExpiryDate())
+        if(card == null){
+
+            return null;
+
+        } else if(card.getCardHolder().equals(insertedCard.getCardHolder()) && card.getExpiryDate().equals(insertedCard.getExpiryDate())
                 && card.getIssuer().equals(insertedCard.getIssuer())){
 
 //            Map<String, String> param = new HashMap<>();
@@ -56,7 +60,7 @@ public class BankService {
             CardData cardData = new CardData();
             cardData.setPan(card.getPan());
 
-            return new ResponseEntity(cardData, HttpStatus.OK);
+            return cardData;
 
            // return new ResponseEntity(param, HttpStatus.OK);
         }
@@ -64,10 +68,10 @@ public class BankService {
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.NOT_VALID_CARD);
     }
 
-    public ResponseEntity getTokenByPinOrFingerprint(String authenticationType, String pan, String pinOrFingerprint) throws HttpServerErrorException {
+    public Token getTokenByPinOrFingerprint(String authenticationType, String pan, String pinOrFingerprint) throws HttpServerErrorException {
         AuthType authType = AuthType.valueOf(authenticationType);
 
-        ResponseEntity result = null;
+        Token result = null;
 
         switch (authType){
             case PIN:
@@ -81,10 +85,14 @@ public class BankService {
         return result;
     }
 
-    private ResponseEntity checkPinOrFingerprint(String pan, String pinOrFingerprint) throws HttpServerErrorException{
+    private Token checkPinOrFingerprint(String pan, String pinOrFingerprint) throws HttpServerErrorException{
         Cards card = cardRepo.findByPan(pan);
 
-        if(card.getPin().equals(pinOrFingerprint) || card.getFingerprint().equals(pinOrFingerprint)) {
+        if(card == null) {
+
+            return null;
+
+        } else if(card.getPin().equals(pinOrFingerprint) || card.getFingerprint().equals(pinOrFingerprint)) {
             String generatedToken = generateToken(card.getPan());
             validatedCardStorage.putCard(card.getPan(), generatedToken);
 
@@ -94,41 +102,50 @@ public class BankService {
             token.setPan(card.getPan());
             token.setToken(generatedToken);
 
-            return new ResponseEntity(token, HttpStatus.OK);
+            return token;
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.WRONG_AUTHENTICATION);
     }
 
 
-    public ResponseEntity getBalance(String token) throws HttpServerErrorException {
+    public CardBalance getBalance(String token) throws HttpServerErrorException {
         Cards card = getCardByToken(token);
 
         Integer balance =  card.getBalance();
 
-        if(validatedCardStorage.getValidatedCard().get(card.getPan())== null){
-            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
-        }
+        if(card == null){
+            return null;
+        }else{
 
+            if (validatedCardStorage.getValidatedCard().get(card.getPan()) == null) {
+                throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
+            }
+/*
         if(balance == 0) {
            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
-        }
+        }*/
 
        /* Map<String, String> param = new HashMap<>();
         param.put(messagesProperties.CARD_TOKEN, token);
         param.put(messagesProperties.BALANCE, balance.toString());*/
 
-        CardBalance sendCardData = new CardBalance();
-        sendCardData.setCardPan(card.getPan());
-        sendCardData.setCardBalance(card.getBalance());
+            CardBalance sendCardData = new CardBalance();
+            sendCardData.setCardPan(card.getPan());
+            sendCardData.setCardBalance(card.getBalance());
+            sendCardData.setToken(token);
 
-        return new ResponseEntity(sendCardData, HttpStatus.OK);
+            return sendCardData;
+        }
     }
 
-    public ResponseEntity<Object> withdrawMoney(String token, Integer amount) {
+    public CardBalance withdrawMoney(String token, Integer amount) {
         Cards card = getCardByToken(token);
         Integer cardBalance =  card.getBalance();
 
+        if(card == null){
+            return null;
+        }else {
         if(validatedCardStorage.getValidatedCard().get(card.getPan())==null){
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
         }
@@ -154,7 +171,8 @@ public class BankService {
 //        JsonObject j=  new JsonObject();
 //        j.add("cardData", cardData.);
 
-        return new ResponseEntity(sendCardData, HttpStatus.OK);
+        return sendCardData;
+        }
     }
 
     private Cards getCardByToken(String token){

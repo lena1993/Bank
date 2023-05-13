@@ -1,6 +1,9 @@
 package com.bank.simulator.controller;
 
 import com.bank.simulator.MessagesProperties;
+import com.bank.simulator.dto.CardBalance;
+import com.bank.simulator.dto.CardData;
+import com.bank.simulator.dto.Token;
 import com.bank.simulator.service.BankService;
 
 import io.swagger.annotations.Api;
@@ -39,9 +42,9 @@ public class BankController {
     @PostMapping(CHECK_CARD)
     public ResponseEntity checkCardExistenceInDb(@RequestBody Card card) {
 
-        ResponseEntity response = bankService.checkCardExistence(card);
-        if(response.getStatusCode() == HttpStatus.OK){
-            return new ResponseEntity(response.getBody(), HttpStatus.OK);
+        CardData response = bankService.checkCardExistence(card);
+        if(response != null){
+            return new ResponseEntity(response, HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.CARD_NOT_FOUND);
@@ -49,11 +52,11 @@ public class BankController {
 
     @PostMapping(CHECK_PIN)
     public ResponseEntity checkPin(@RequestBody Map<String, String> param) {
-        ResponseEntity response = bankService.getTokenByPinOrFingerprint(param.get(AUTHENTICATION_TYPE),
+        Token response = bankService.getTokenByPinOrFingerprint(param.get(AUTHENTICATION_TYPE),
                 param.get(PAN), param.get(PIN_OR_FINGERPRINT));
 
-        if(response.getStatusCode() == HttpStatus.OK) {
-            return new ResponseEntity(response.getBody(), HttpStatus.OK);
+        if(response != null) {
+            return new ResponseEntity(response, HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.WRONG_AUTHENTICATION);
@@ -63,10 +66,10 @@ public class BankController {
     @PostMapping(CHECK_BALANCE)
     public ResponseEntity checkBalance(@RequestBody Map<String, String> param) {
 
-        ResponseEntity response = bankService.getBalance(param.get(TOKEN));
+        CardBalance response = bankService.getBalance(param.get(TOKEN));
 
-        if(response.getStatusCode() == HttpStatus.OK) {
-            return new ResponseEntity(response.getBody(), response.getHeaders(), HttpStatus.OK);
+        if(response != null) {
+            return new ResponseEntity(response, HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_BALANCE);
@@ -75,10 +78,10 @@ public class BankController {
     @PostMapping(CASH_OUT)
     public ResponseEntity<Object> cashOut(@RequestBody Map<String, String> params) {
 
-        ResponseEntity response = bankService.withdrawMoney(params.get(TOKEN), Integer.parseInt(params.get(AMOUNT)));
+        CardBalance response = bankService.withdrawMoney(params.get(TOKEN), Integer.parseInt(params.get(AMOUNT)));
 
-        if(response.getStatusCode() == HttpStatus.OK) {
-            return new ResponseEntity(response.getBody(), HttpStatus.OK);
+        if(response != null) {
+            return new ResponseEntity(response, HttpStatus.OK);
         }
 
         throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR, messagesProperties.FAIL_GET_MONEY);
